@@ -27,8 +27,7 @@ const users = [
         Firstname: "Mari",
         Lastname: "Lii",
         Email: "mari@example.com",
-        SecureLevel: 0,
-        LevelKey: "0-0"
+        SecureLevel: 0
     },
     {
         ID: 2,
@@ -36,8 +35,7 @@ const users = [
         Firstname: "Liina",
         Lastname: "Tiina",
         Email: "liina@example.com",
-        SecureLevel: 0,
-        LevelKey: "0-1"
+        SecureLevel: 0
     },
     {
         ID: 3,
@@ -45,8 +43,7 @@ const users = [
         Firstname: "Kusti",
         Lastname: "Lusti",
         Email: "kusti@example.com",
-        SecureLevel: 0,
-        LevelKey: "1-0"
+        SecureLevel: 0
     },
     {
         ID: 4,
@@ -54,16 +51,20 @@ const users = [
         Firstname: "Admin",
         Lastname: "Administraator",
         Email: "admin@example.com",
-        SecureLevel: 1,
-        LevelKey: "0-0"
-    },
+        SecureLevel: 1
+        },
 ]
 
 app.use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerDoc));
 app.use(express.json());
 
 // WORKS
-app.get("/criminals", (req, res) => { res.send(criminals)})
+app.get("/criminals", (req, res) => { const criminalNames = criminals.map(criminal => ({
+    Name: criminal.Name
+}));
+res.send(criminalNames);
+})
+
 app.get("/criminals/:id", (req, res) => {
     const id = parseInt(req.params.id, 10);
 
@@ -147,18 +148,16 @@ app.get("/users/:id", (req, res) => {
 })
 app.post('/users', (req, res) => {
     // ID: 1,
-    //     Username: "xXtittyslayer666Xx",
+    //     Username: "Nipi",
     //     Firstname: "Mihkel",
     //     Lastname: "Jaakson",
     //     Email: "mihkel@example.com",
     //     SecureLevel: 0,
-    //     LevelKey: "0-0"
     if (!req.body.Username ||
         !req.body.Firstname||
         !req.body.Lastname||
         !req.body.Email||
-        !req.body.SecureLevel||
-        !req.body.LevelKey) 
+        !req.body.SecureLevel) 
     {
         return res.status(400).send({error: "One or multiple parameters are missing"});
     }
@@ -170,7 +169,6 @@ app.post('/users', (req, res) => {
         Lastname: req.body.Lastname,
         Email: req.body.Email,
         SecureLevel: req.body.SecureLevel,
-        LevelKey: req.body.LevelKey,
     }
     users.push(user);
     res.status(201)
@@ -186,8 +184,7 @@ app.put('/users/:id', (req, res) => {
         !req.body.Firstname||
         !req.body.Lastname||
         !req.body.Email||
-        !req.body.SecureLevel||
-        !req.body.LevelKey) 
+        !req.body.SecureLevel) 
     {
         return res.status(400).send({error: "One or multiple parameters are missing"});
     }
@@ -198,7 +195,6 @@ app.put('/users/:id', (req, res) => {
         Lastname: req.body.Lastname,
         Email: req.body.Email,
         SecureLevel: req.body.SecureLevel,
-        LevelKey: req.body.LevelKey,
     }
     user.ID = parseInt(req.body.ID);
     users.splice((req.body.ID-1), 1, user);
