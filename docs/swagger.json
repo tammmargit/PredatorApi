@@ -1,15 +1,15 @@
 {
     "openapi": "3.0.2",
     "info": {
-        "title": "BideoGamTARge23",
+        "title": "Predator API",
         "version": "1.0.0",
-        "description": "games api"
+        "description": "Predator API"
     },
     "paths": {
         "/games": {
             "get": {
                 "tags": [
-                    "games"
+                    "criminals"
                 ],
                 "responses": {
                     "200": {

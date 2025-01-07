@@ -4,19 +4,40 @@ const swaggerUI = require('swagger-ui-express');
 const yamljs = require('yamljs');
 const swaggerDoc = yamljs.load('./docs/swagger.yaml');
 var express = require('express')
+const cors = require('cors');
 
 const criminals = [
     { 
         Id: 1,
-        Name: "John Doe", Gender: "Male", Offence: "Robbery"
+        Name: "John Doe", 
+        Gender: "Male", 
+        Offence: "Robbery",
+        InPrison: true,
+        City: "Paide"
     },
     { 
         Id: 2, 
-        Name: "Diddy", Gender: "Male", Offence: "Murder"
+        Name: "Diddy", 
+        Gender: "Male", 
+        Offence: "Murder",
+        InPrison: false,
+        City: "Tartu"
     },
     { 
         Id: 3, 
-        Name: "Jeffrey Epstein", Gender: "Male", Offence: "Pedophilia"
+        Name: "Jeffrey Epstein", 
+        Gender: "Male", 
+        Offence: "Pedophilia",
+        InPrison: true,
+        City: "Tallinn"
+    }, 
+    { 
+        Id: 4, 
+        Name: "Margit Tammeorg", 
+        Gender: "Female", 
+        Offence: "Nii ilus",
+        InPrison: false,
+        City: "Tartu"
     } 
 ]
 
@@ -55,14 +76,19 @@ const users = [
         },
 ]
 
+app.use(cors());
 app.use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerDoc));
 app.use(express.json());
 
 // WORKS
-app.get("/criminals", (req, res) => { const criminalNames = criminals.map(criminal => ({
-    Name: criminal.Name
-}));
-res.send(criminalNames);
+app.get("/criminals", (req, res) => { 
+    const criminalData = criminals.map(criminal => ({
+        Id: criminal.Id,
+        Name: criminal.Name,
+        Offence: criminal.Offence,
+        Gender: criminal.Gender
+    }));
+    res.send(criminalData);
 })
 
 app.get("/criminals/:id", (req, res) => {
@@ -82,24 +108,17 @@ app.get("/criminals/:id", (req, res) => {
 })
 
 app.post('/criminals', (req, res) => {
-    if (!req.body.Name || 
-        !req.body.Gender ||
-        !req.body.Offence) 
-    {
-        return res.status(400).send({error: "One or multiple parameters are missing"});
-    }
-
-    let criminal = {
-        Id: criminals.length +1,
+    const newCriminal = {
+        Id: criminals.length + 1,
         Name: req.body.Name,
         Gender: req.body.Gender,
-        Offence: req.body.Offence
-    }
-    criminals.push(criminal);
-    res.status(201)
-        .location(`${getBaseURL(req)}/criminals/${criminals.length}`)
-        .send(criminal);
-})
+        Offence: req.body.Offence,
+        InPrison: req.body.InPrison,
+        City: req.body.City
+    };
+    criminals.push(newCriminal);
+    res.status(201).send(newCriminal);
+});
 
 app.put('/criminals/:id', (req, res) => {
     if (req.params.id == null) {
