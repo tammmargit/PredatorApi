@@ -5,6 +5,7 @@ const yamljs = require('yamljs');
 const swaggerDoc = yamljs.load('./docs/swagger.yaml');
 var express = require('express')
 const cors = require('cors');
+const nodemailer = require('nodemailer');
 
 const criminals = [
     { 
@@ -80,13 +81,23 @@ app.use(cors());
 app.use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerDoc));
 app.use(express.json());
 
+// Email configuration
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'margit.tammeorg@gmail.com', // Replace with your Gmail
+    pass: 'tcsxslwiqfsnicez'     // Replace with your app password
+  }
+});
+
 // WORKS
 app.get("/criminals", (req, res) => { 
     const criminalData = criminals.map(criminal => ({
         Id: criminal.Id,
         Name: criminal.Name,
         Offence: criminal.Offence,
-        Gender: criminal.Gender
+        Gender: criminal.Gender,
+        City: criminal.City
     }));
     res.send(criminalData);
 })
@@ -108,6 +119,13 @@ app.get("/criminals/:id", (req, res) => {
 })
 
 app.post('/criminals', (req, res) => {
+    if (!req.body.Name || 
+        !req.body.Gender ||
+        !req.body.Offence ||
+        !req.body.City)
+    {
+        return res.status(400).send({error: "One or multiple parameters are missing"});
+    }
     const newCriminal = {
         Id: criminals.length + 1,
         Name: req.body.Name,
@@ -126,7 +144,8 @@ app.put('/criminals/:id', (req, res) => {
     }
     if (!req.body.Name || 
         !req.body.Gender ||
-        !req.body.Offence) 
+        !req.body.Offence ||
+        !req.body.City)
     {
         return res.status(400).send({error: "One or multiple parameters are missing"});
     }
@@ -134,7 +153,9 @@ app.put('/criminals/:id', (req, res) => {
         Id: req.body.id,
         Name: req.body.Name,
         Gender: req.body.Gender,
-        Offence: req.body.Offence
+        Offence: req.body.Offence,
+        InPrison: req.body.InPrison,
+        City: req.body.City
     }
     criminals.splice((req.body.id-1), 1, criminal);
     res.status(201)
@@ -230,6 +251,34 @@ app.delete('/users/:id', (req, res) => {
 
     res.status(204).send({error: "No Content"});
 })
+
+// Add new endpoint for sending emails
+app.post('/report', cors(), express.json(), (req, res) => {
+  const { name, email, message } = req.body;
+  
+  const mailOptions = {
+    from: 'margit.tammeorg@gmail.com',  // Replace with your Gmail
+    to: 'margit.tammeorg@gmail.com',   // Replace with destination email
+    subject: `New Crime Report from ${name}`,
+    text: `
+      Name: ${name}
+      Email: ${email}
+      
+      Message:
+      ${message}
+    `
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error('Error sending email:', error);
+      res.status(500).json({ error: 'Failed to send email' });
+    } else {
+      console.log('Email sent:', info.response);
+      res.status(200).json({ message: 'Email sent successfully' });
+    }
+  });
+});
 
 app.listen(port, () => {console.log(`Api on saadaval aadressil: http://localhost:${port}`);});
 

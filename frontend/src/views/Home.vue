@@ -1,34 +1,42 @@
 <template>
   <div class="home-container">
     <div class="header">
-      <h1>Welcome to the Criminals Database</h1>
-      <p>Explore the database of known criminals.</p>
+      <h1>Kurjategijate andmebaas</h1>
+      <p>Otsi kurjategijaid nime, asukoha või kuriteo järgi</p>
     </div>
+    
     <div class="search-section">
-      <input
-        v-model="searchQuery"
-        placeholder="Search by name"
-        class="search-input"
-        @input="filterSuggestions"
-      />
-      <button @click="searchCriminals" class="search-button">Search</button>
+      <div class="search-group">
+        <input
+          v-model="searchQuery"
+          placeholder="Sisesta otsingusõna..."
+          class="search-input"
+          @input="filterSuggestions"
+        />
+      </div>
+
+      <button @click="searchCriminals" class="search-button">Otsi</button>
     </div>
 
-    <ul v-if="suggestions.length && searchQuery" class="suggestions-list">
+    <ul v-if="suggestions.length" class="suggestions-list">
       <li
         v-for="suggestion in suggestions"
         :key="suggestion.Id"
         @click="selectSuggestion(suggestion)"
       >
-        {{ suggestion.Name }}
+        {{ suggestion.Name }} - {{ suggestion.City }} - {{ suggestion.Offence }}
       </li>
     </ul>
 
     <div v-if="searchResults.length" class="results-container">
-      <h2>Search Results</h2>
+      <h2>Otsingu tulemused</h2>
       <ul>
-        <li v-for="criminal in searchResults" :key="criminal.Id">
-          {{ criminal.Name }} - {{ criminal.Offence }}
+        <li v-for="criminal in searchResults" :key="criminal.Id" class="result-item">
+          <div class="criminal-info">
+            <strong>{{ criminal.Name }}</strong>
+            <span class="location">{{ criminal.City }}</span>
+            <span class="offence">{{ criminal.Offence }}</span>
+          </div>
         </li>
       </ul>
     </div>
@@ -58,8 +66,11 @@ export default {
 
     const filterSuggestions = () => {
       if (searchQuery.value) {
+        const query = searchQuery.value.toLowerCase();
         suggestions.value = criminals.value.filter(criminal =>
-          criminal.Name.toLowerCase().includes(searchQuery.value.toLowerCase())
+          criminal.Name.toLowerCase().includes(query) ||
+          criminal.City.toLowerCase().includes(query) ||
+          criminal.Offence.toLowerCase().includes(query)
         );
       } else {
         suggestions.value = [];
@@ -73,17 +84,31 @@ export default {
     };
 
     const searchCriminals = () => {
-      searchResults.value = criminals.value.filter(criminal =>
-        criminal.Name.toLowerCase().includes(searchQuery.value.toLowerCase())
-      );
+      if (searchQuery.value) {
+        const query = searchQuery.value.toLowerCase();
+        searchResults.value = criminals.value.filter(criminal =>
+          criminal.Name.toLowerCase().includes(query) ||
+          criminal.City.toLowerCase().includes(query) ||
+          criminal.Offence.toLowerCase().includes(query)
+        );
+      } else {
+        searchResults.value = [];
+      }
     };
 
-    return { searchQuery, searchResults, suggestions, filterSuggestions, selectSuggestion, searchCriminals };
+    return { 
+      searchQuery, 
+      searchResults, 
+      suggestions, 
+      filterSuggestions, 
+      selectSuggestion, 
+      searchCriminals 
+    };
   }
 }
 </script>
 
-<style>
+<style scoped>
 .home-container {
   max-width: 800px;
   margin: 0 auto;
@@ -100,15 +125,21 @@ export default {
 
 .search-section {
   display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   justify-content: center;
   align-items: center;
   margin-bottom: 30px;
 }
 
+.search-group {
+  flex: 1;
+  min-width: 200px;
+}
+
 .search-input {
+  width: 100%;
   padding: 10px;
-  width: 300px;
-  margin-right: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
@@ -130,33 +161,44 @@ export default {
   margin-top: 30px;
 }
 
-ul {
-  list-style-type: none;
-  padding: 0;
+.result-item {
+  margin: 10px 0;
+  padding: 15px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 }
 
-li {
-  margin: 5px 0;
-  padding: 10px;
-  background-color: white;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+.criminal-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.location {
+  color: #666;
+  margin: 0 10px;
+}
+
+.offence {
+  color: #dc3545;
 }
 
 .suggestions-list {
   list-style-type: none;
   padding: 0;
-  margin-top: 10px;
+  margin: 10px auto;
   background-color: white;
   border: 1px solid #ccc;
   border-radius: 4px;
-  max-width: 300px;
-  margin: 0 auto;
+  max-width: 600px;
 }
 
 .suggestions-list li {
   padding: 10px;
   cursor: pointer;
+  display: flex;
+  justify-content: space-between;
 }
 
 .suggestions-list li:hover {
