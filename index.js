@@ -42,7 +42,10 @@ app.get("/criminals/:id", async (req, res) => {
 // POST uus kurjategija
 app.post('/criminals', async (req, res) => {
   try {
+    console.log('Received criminal data:', req.body); // Debug log
+
     if (!req.body.Name || !req.body.Gender || !req.body.Offence || !req.body.City) {
+      console.log('Missing fields:', req.body); // Debug log
       return res.status(400).json({ error: "Required fields missing" });
     }
 
@@ -55,8 +58,10 @@ app.post('/criminals', async (req, res) => {
     });
 
     const newCriminal = await knex('criminals').where('Id', id).first();
+    console.log('Created criminal:', newCriminal); // Debug log
     res.status(201).json(newCriminal);
   } catch (error) {
+    console.error('Error creating criminal:', error); // Debug log
     res.status(500).json({ error: error.message });
   }
 });

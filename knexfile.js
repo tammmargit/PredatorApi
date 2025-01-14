@@ -4,7 +4,7 @@ module.exports = {
   development: {
     client: 'sqlite3',
     connection: {
-      filename: process.env.DB_PATH || './database/criminals.sqlite3'
+      filename: './database/criminals.sqlite3'
     },
     migrations: {
       directory: './database/migrations'
