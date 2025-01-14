@@ -1,108 +1,104 @@
 <template>
   <div class="home-container">
-    <div class="header">
-      <h1>Kurjategijate andmebaas</h1>
-      <p>Otsi kurjategijaid nime, asukoha või kuriteo järgi</p>
-    </div>
-    
-    <div class="search-section">
-      <div class="search-group">
-        <input
-          v-model="searchQuery"
-          placeholder="Sisesta otsingusõna..."
-          class="search-input"
-          @input="filterSuggestions"
-        />
+    <div class="hero-section">
+      <h1>Aita hoida Eestit turvalisena!</h1>
+      <p class="subtitle">Sinu teavitus võib olla määrava tähtsusega</p>
+      
+      <div class="info-section">
+        <p class="description">
+          Kui märkad kahtlast tegevust või omad infot kuritegevuse kohta, 
+          anna meile teada. Iga viide on oluline.
+        </p>
       </div>
 
-      <button @click="searchCriminals" class="search-button">Otsi</button>
+      <div class="cta-section">
+        <router-link to="/about" class="cta-button">
+          TEAVITA MEID
+        </router-link>
+      </div>
     </div>
 
-    <ul v-if="suggestions.length" class="suggestions-list">
-      <li
-        v-for="suggestion in suggestions"
-        :key="suggestion.Id"
-        @click="selectSuggestion(suggestion)"
-      >
-        {{ suggestion.Name }} - {{ suggestion.City }} - {{ suggestion.Offence }}
-      </li>
-    </ul>
+    <div class="search-section">
+      <h2>Otsi andmebaasist</h2>
+      <div class="search-container">
+        <div class="search-box">
+          <input 
+            v-model="searchQuery" 
+            type="text" 
+            placeholder="Otsi nime või linna järgi..."
+            @input="handleSearch"
+          >
+        </div>
+        <div class="filter-box">
+          <select v-model="selectedCity" @change="handleSearch">
+            <option value="">Kõik linnad</option>
+            <option v-for="city in uniqueCities" :key="city" :value="city">
+              {{ city }}
+            </option>
+          </select>
+        </div>
+      </div>
 
-    <div v-if="searchResults.length" class="results-container">
-      <h2>Otsingu tulemused</h2>
-      <ul>
-        <li v-for="criminal in searchResults" :key="criminal.Id" class="result-item">
-          <div class="criminal-info">
-            <strong>{{ criminal.Name }}</strong>
-            <span class="location">{{ criminal.City }}</span>
-            <span class="offence">{{ criminal.Offence }}</span>
-          </div>
-        </li>
-      </ul>
+      <div v-if="filteredCriminals.length > 0" class="results-container">
+        <div v-for="criminal in filteredCriminals" 
+             :key="criminal.Id" 
+             class="result-card"
+             @click="goToDetail(criminal.Id)">
+          <h3>{{ criminal.Name }}</h3>
+          <p>{{ criminal.City }}</p>
+          <span :class="{ 'status-in-prison': criminal.InPrison, 'status-free': !criminal.InPrison }">
+            {{ criminal.InPrison ? 'Vangis' : 'Vabadusel' }}
+          </span>
+        </div>
+      </div>
+      <p v-else-if="searchQuery || selectedCity" class="no-results">
+        Tulemusi ei leitud
+      </p>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import axios from 'axios';
 
 export default {
   name: 'Home',
   setup() {
     const searchQuery = ref('');
-    const searchResults = ref([]);
-    const suggestions = ref([]);
+    const selectedCity = ref('');
     const criminals = ref([]);
 
-    onMounted(async () => {
+    const uniqueCities = computed(() => {
+      return [...new Set(criminals.value.map(c => c.City))];
+    });
+
+    const filteredCriminals = computed(() => {
+      return criminals.value.filter(criminal => {
+        const matchesSearch = criminal.Name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+                            criminal.City.toLowerCase().includes(searchQuery.value.toLowerCase());
+        const matchesCity = !selectedCity.value || criminal.City === selectedCity.value;
+        return matchesSearch && matchesCity;
+      });
+    });
+
+    const fetchCriminals = async () => {
       try {
         const response = await axios.get('http://localhost:8080/criminals');
         criminals.value = response.data;
       } catch (error) {
         console.error('Error fetching criminals:', error);
       }
-    });
-
-    const filterSuggestions = () => {
-      if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase();
-        suggestions.value = criminals.value.filter(criminal =>
-          criminal.Name.toLowerCase().includes(query) ||
-          criminal.City.toLowerCase().includes(query) ||
-          criminal.Offence.toLowerCase().includes(query)
-        );
-      } else {
-        suggestions.value = [];
-      }
     };
 
-    const selectSuggestion = (suggestion) => {
-      searchQuery.value = suggestion.Name;
-      searchResults.value = [suggestion];
-      suggestions.value = [];
-    };
+    fetchCriminals();
 
-    const searchCriminals = () => {
-      if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase();
-        searchResults.value = criminals.value.filter(criminal =>
-          criminal.Name.toLowerCase().includes(query) ||
-          criminal.City.toLowerCase().includes(query) ||
-          criminal.Offence.toLowerCase().includes(query)
-        );
-      } else {
-        searchResults.value = [];
-      }
-    };
-
-    return { 
-      searchQuery, 
-      searchResults, 
-      suggestions, 
-      filterSuggestions, 
-      selectSuggestion, 
-      searchCriminals 
+    return {
+      searchQuery,
+      selectedCity,
+      uniqueCities,
+      filteredCriminals,
+      criminals
     };
   }
 }
@@ -110,98 +106,181 @@ export default {
 
 <style scoped>
 .home-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 50px 20px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  color: white;
 }
 
-.header {
+.hero-section {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  margin-bottom: 40px;
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  color: white;
+  font-weight: bold;
+}
+
+.subtitle {
+  font-size: 1.8rem;
+  color: #dc3545;
+  margin-bottom: 3rem;
+}
+
+.info-section {
+  margin-bottom: 3rem;
+}
+
+.description {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: #cccccc;
+}
+
+.cta-button {
+  display: inline-block;
+  padding: 1.5rem 4rem;
+  background-color: #dc3545;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 1.4rem;
+  font-weight: bold;
+  transition: transform 0.3s, background-color 0.3s;
+  border: none;
+}
+
+.cta-button:hover {
+  background-color: #c82333;
+  transform: translateY(-3px);
+}
+
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2.5rem;
+  }
+  
+  .subtitle {
+    font-size: 1.4rem;
+  }
+  
+  .description {
+    font-size: 1.1rem;
+  }
+  
+  .cta-button {
+    padding: 1.2rem 3rem;
+    font-size: 1.2rem;
+  }
 }
 
 .search-section {
+  padding: 4rem 2rem;
+  background: white;
+  min-height: 100vh;
+}
+
+.search-section h2 {
+  text-align: center;
+  color: #333;
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+}
+
+.search-container {
+  max-width: 800px;
+  margin: 0 auto;
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 30px;
+  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
-.search-group {
+.search-box {
+  flex: 2;
+}
+
+.filter-box {
   flex: 1;
-  min-width: 200px;
 }
 
-.search-input {
+input, select {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.search-button {
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.search-button:hover {
-  background-color: #0056b3;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
 }
 
 .results-container {
-  margin-top: 30px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.result-item {
-  margin: 10px 0;
-  padding: 15px;
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.criminal-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.location {
-  color: #666;
-  margin: 0 10px;
-}
-
-.offence {
-  color: #dc3545;
-}
-
-.suggestions-list {
-  list-style-type: none;
-  padding: 0;
-  margin: 10px auto;
-  background-color: white;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  max-width: 600px;
-}
-
-.suggestions-list li {
-  padding: 10px;
+.result-card {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   cursor: pointer;
-  display: flex;
-  justify-content: space-between;
+  transition: transform 0.2s;
 }
 
-.suggestions-list li:hover {
-  background-color: #f0f0f0;
+.result-card:hover {
+  transform: translateY(-4px);
+}
+
+.result-card h3 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.result-card p {
+  color: #666;
+  margin: 0 0 1rem 0;
+}
+
+.status-in-prison {
+  background-color: #dc3545;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+}
+
+.status-free {
+  background-color: #28a745;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+}
+
+.no-results {
+  text-align: center;
+  color: #666;
+  font-size: 1.1rem;
+  margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+  .search-container {
+    flex-direction: column;
+  }
+
+  .search-box, .filter-box {
+    width: 100%;
+  }
 }
 </style>

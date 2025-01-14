@@ -1,85 +1,111 @@
-const port = 8080;
-const app = require('express')();
+require('dotenv').config();
+const express = require('express');
+const app = express();
 const swaggerUI = require('swagger-ui-express');
 const yamljs = require('yamljs');
 const swaggerDoc = yamljs.load('./docs/swagger.yaml');
-var express = require('express')
 const cors = require('cors');
 const nodemailer = require('nodemailer');
-
-const criminals = [
-    { 
-        Id: 1,
-        Name: "John Doe", 
-        Gender: "Male", 
-        Offence: "Robbery",
-        InPrison: true,
-        City: "Paide"
-    },
-    { 
-        Id: 2, 
-        Name: "Diddy", 
-        Gender: "Male", 
-        Offence: "Murder",
-        InPrison: false,
-        City: "Tartu"
-    },
-    { 
-        Id: 3, 
-        Name: "Jeffrey Epstein", 
-        Gender: "Male", 
-        Offence: "Pedophilia",
-        InPrison: true,
-        City: "Tallinn"
-    }, 
-    { 
-        Id: 4, 
-        Name: "Margit Tammeorg", 
-        Gender: "Female", 
-        Offence: "Nii ilus",
-        InPrison: false,
-        City: "Tartu"
-    } 
-]
-
-const users = [
-    {
-        ID: 1,
-        Username: "MariLii",
-        Firstname: "Mari",
-        Lastname: "Lii",
-        Email: "mari@example.com",
-        SecureLevel: 0
-    },
-    {
-        ID: 2,
-        Username: "LiinaTiina",
-        Firstname: "Liina",
-        Lastname: "Tiina",
-        Email: "liina@example.com",
-        SecureLevel: 0
-    },
-    {
-        ID: 3,
-        Username: "KustiLusti",
-        Firstname: "Kusti",
-        Lastname: "Lusti",
-        Email: "kusti@example.com",
-        SecureLevel: 0
-    },
-    {
-        ID: 4,
-        Username: "Admin",
-        Firstname: "Admin",
-        Lastname: "Administraator",
-        Email: "admin@example.com",
-        SecureLevel: 1
-        },
-]
+const knex = require('./database/db-config');
 
 app.use(cors());
 app.use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerDoc));
 app.use(express.json());
+
+// GET kõik kurjategijad
+app.get("/criminals", async (req, res) => {
+  try {
+    const criminals = await knex('criminals')
+      .select('Id', 'Name', 'Gender', 'Offence', 'City', 'InPrison');
+    res.json(criminals);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET üks kurjategija
+app.get("/criminals/:id", async (req, res) => {
+  try {
+    const criminal = await knex('criminals')
+      .where('Id', req.params.id)
+      .first();
+    
+    if (!criminal) {
+      return res.status(404).json({ error: "Criminal not found" });
+    }
+    res.json(criminal);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST uus kurjategija
+app.post('/criminals', async (req, res) => {
+  try {
+    if (!req.body.Name || !req.body.Gender || !req.body.Offence || !req.body.City) {
+      return res.status(400).json({ error: "Required fields missing" });
+    }
+
+    const [id] = await knex('criminals').insert({
+      Name: req.body.Name,
+      Gender: req.body.Gender,
+      Offence: req.body.Offence,
+      City: req.body.City,
+      InPrison: req.body.InPrison || false
+    });
+
+    const newCriminal = await knex('criminals').where('Id', id).first();
+    res.status(201).json(newCriminal);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT kurjategija muutmine
+app.put('/criminals/:id', async (req, res) => {
+  try {
+    if (!req.body.Name || !req.body.Gender || !req.body.Offence || !req.body.City) {
+      return res.status(400).json({ error: "Required fields missing" });
+    }
+
+    const count = await knex('criminals')
+      .where('Id', req.params.id)
+      .update({
+        Name: req.body.Name,
+        Gender: req.body.Gender,
+        Offence: req.body.Offence,
+        City: req.body.City,
+        InPrison: req.body.InPrison
+      });
+
+    if (count === 0) {
+      return res.status(404).json({ error: "Criminal not found" });
+    }
+
+    const updatedCriminal = await knex('criminals')
+      .where('Id', req.params.id)
+      .first();
+    res.json(updatedCriminal);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE kurjategija
+app.delete('/criminals/:id', async (req, res) => {
+  try {
+    const count = await knex('criminals')
+      .where('Id', req.params.id)
+      .delete();
+    
+    if (count === 0) {
+      return res.status(404).json({ error: "Criminal not found" });
+    }
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Email configuration
 const transporter = nodemailer.createTransport({
@@ -89,91 +115,6 @@ const transporter = nodemailer.createTransport({
     pass: 'tcsxslwiqfsnicez'     // Replace with your app password
   }
 });
-
-// WORKS
-app.get("/criminals", (req, res) => { 
-    const criminalData = criminals.map(criminal => ({
-        Id: criminal.Id,
-        Name: criminal.Name,
-        Offence: criminal.Offence,
-        Gender: criminal.Gender,
-        City: criminal.City
-    }));
-    res.send(criminalData);
-})
-
-app.get("/criminals/:id", (req, res) => {
-    const id = parseInt(req.params.id, 10);
-
-    // Check if the ID is a valid number
-    if (isNaN(id)) {
-        return res.status(400).send({error: "Invalid criminal ID"});
-    }
-
-    // Check if the criminal exists
-    if (typeof criminals[id - 1] === "undefined") {
-        return res.status(404).send({error: "Criminal not found"});
-    }
-
-    res.send(criminals[id - 1]);
-})
-
-app.post('/criminals', (req, res) => {
-    if (!req.body.Name || 
-        !req.body.Gender ||
-        !req.body.Offence ||
-        !req.body.City)
-    {
-        return res.status(400).send({error: "One or multiple parameters are missing"});
-    }
-    const newCriminal = {
-        Id: criminals.length + 1,
-        Name: req.body.Name,
-        Gender: req.body.Gender,
-        Offence: req.body.Offence,
-        InPrison: req.body.InPrison,
-        City: req.body.City
-    };
-    criminals.push(newCriminal);
-    res.status(201).send(newCriminal);
-});
-
-app.put('/criminals/:id', (req, res) => {
-    if (req.params.id == null) {
-        return res.status(404).send({error: "Criminal not found"});
-    }
-    if (!req.body.Name || 
-        !req.body.Gender ||
-        !req.body.Offence ||
-        !req.body.City)
-    {
-        return res.status(400).send({error: "One or multiple parameters are missing"});
-    }
-    let criminal = {
-        Id: req.body.id,
-        Name: req.body.Name,
-        Gender: req.body.Gender,
-        Offence: req.body.Offence,
-        InPrison: req.body.InPrison,
-        City: req.body.City
-    }
-    criminals.splice((req.body.id-1), 1, criminal);
-    res.status(201)
-        .location(`${getBaseURL(req)}/criminals/${criminals.length}`)
-        .send(criminal);
-
-})
-
-
-app.delete('/criminals/:id', (req, res) => {
-    if(typeof criminals[req.params.id -1] === 'undefined') {
-        return res.status(404).send({error: "Criminal not found"});
-    }
-    criminals.splice(req.params.id-1, 1);
-
-    res.status(204).send({error: "No Content"});
- 
-})
 
 app.get("/users", (req, res) => { res.status(200).send(users)})
 
@@ -280,7 +221,10 @@ app.post('/report', cors(), express.json(), (req, res) => {
   });
 });
 
-app.listen(port, () => {console.log(`Api on saadaval aadressil: http://localhost:${port}`);});
+const port = process.env.PORT || 8080;
+app.listen(port, () => {
+  console.log(`Api on saadaval aadressil: http://localhost:${port}`);
+});
 
 function getBaseURL(req) {
     return req.connection && req.connection.encrypted ? "https" : "http" + `://${req.headers.host}`;

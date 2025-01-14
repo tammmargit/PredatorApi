@@ -50,39 +50,96 @@ export default {
 </script>
 
 <style>
+
 .navbar {
-  background-color: #aab1b8;
-  padding: 15px 0;
+  background-color: rgba(26, 26, 26, 0.95);
+  padding: 6rem 0;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .navbar-container {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 10px 2rem;
 }
 
 .nav-links {
   display: flex;
   justify-content: center;
-  gap: 50px;
+  gap: 3rem;
   align-items: center;
 }
 
 .nav-link {
-  color: #333;
+  color: white !important;
   text-decoration: none;
-  font-weight: bold;
-  font-size: 18px;
+  font-weight: 500;
+  font-size: 1.1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: 0;
+  left: 50%;
+  background-color: #dc3545;
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
+
+.nav-link:hover::after {
+  width: 100%;
 }
 
 .nav-link:hover {
-  color: #007bff;
+  color: white !important;
+  opacity: 0.8;
 }
 
 .login-btn {
-  color: #007bff;
+  background-color: #dc3545;
+  color: white !important;
+  padding: 0.5rem 1.5rem;
+  border-radius: 25px;
 }
 
 .login-btn:hover {
-  color: #0056b3;
+  background-color: #c82333;
+  color: white !important;
+}
+
+.login-btn::after {
+  display: none;
+}
+
+.router-link-active {
+  color: white !important;
+}
+
+.router-link-active::after {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .nav-links {
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: space-around;
+  }
+
+  .nav-link {
+    font-size: 1rem;
+    padding: 0.4rem 0.8rem;
+  }
 }
 </style>

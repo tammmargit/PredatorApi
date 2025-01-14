@@ -29,9 +29,13 @@
         </div>
         
         <div class="form-group">
-          <label>
-            <input type="checkbox" v-model="newCriminal.InPrison">
+          <label class="checkbox-label">
             Vangis
+            <input 
+              type="checkbox" 
+              v-model="newCriminal.InPrison"
+              class="checkbox-input"
+            >
           </label>
         </div>
         
@@ -113,6 +117,29 @@ input, select {
   border-radius: 4px;
 }
 
+.checkbox-group {
+  margin-top: 20px;
+  text-align: left;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  max-width: 100px;
+  font-weight: bold;
+}
+
+.checkbox-input {
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.checkbox-text {
+  font-weight: bold;
+}
+
 button {
   background-color: #007bff;
   color: white;
@@ -120,6 +147,7 @@ button {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  margin-top: 20px;
 }
 
 button:hover {
