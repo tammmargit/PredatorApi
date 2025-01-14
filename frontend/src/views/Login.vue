@@ -45,14 +45,34 @@ export default {
     const password = ref('');
     const error = ref('');
 
-    const handleLogin = () => {
-      if (username.value === 'admin' && password.value === 'admin123') {
-        localStorage.setItem('isAuthenticated', 'true');
-        router.push('/').then(() => {
-          window.location.reload();
+    const handleLogin = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: username.value,
+            password: password.value
+          })
         });
-      } else {
-        error.value = 'Vale kasutajanimi või parool';
+
+        const data = await response.json();
+        
+        if (data.success) {
+          localStorage.setItem('isAuthenticated', 'true');
+          localStorage.setItem('userRole', data.role);
+          localStorage.setItem('username', username.value);
+          
+          router.push('/').then(() => {
+            window.location.reload();
+          });
+        } else {
+          error.value = 'Vale kasutajanimi või parool';
+        }
+      } catch (err) {
+        error.value = 'Sisselogimine ebaõnnestus';
       }
     };
 

@@ -107,91 +107,102 @@ app.delete('/criminals/:id', async (req, res) => {
   }
 });
 
-// Email configuration
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: 'margit.tammeorg@gmail.com', // Replace with your Gmail
-    pass: 'tcsxslwiqfsnicez'     // Replace with your app password
+// GET kõik kasutajad
+app.get("/users", async (req, res) => {
+  try {
+    const users = await knex('users')
+      .select('ID', 'Username', 'Firstname', 'Lastname', 'Email', 'SecureLevel');
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
-app.get("/users", (req, res) => { res.status(200).send(users)})
+// GET üks kasutaja
+app.get("/users/:id", async (req, res) => {
+  try {
+    const user = await knex('users')
+      .where('ID', req.params.id)
+      .first();
+    
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
-app.get("/users/:id", (req, res) => {
-    if (typeof users[req.params.id -1] === "undefined") {
-        return res.status(404).send({error: "User not found"});
-    }
-    if (req.params.id == null) {
-        return res.status(400).send({error: "Invalid user ID specified"});
-    }
-    res.status(200).send(users[req.params.id-1])
-})
-app.post('/users', (req, res) => {
-    // ID: 1,
-    //     Username: "Nipi",
-    //     Firstname: "Mihkel",
-    //     Lastname: "Jaakson",
-    //     Email: "mihkel@example.com",
-    //     SecureLevel: 0,
-    if (!req.body.Username ||
-        !req.body.Firstname||
-        !req.body.Lastname||
-        !req.body.Email||
-        !req.body.SecureLevel) 
-    {
-        return res.status(400).send({error: "One or multiple parameters are missing"});
+// POST uus kasutaja
+app.post('/users', async (req, res) => {
+  try {
+    if (!req.body.Username || !req.body.Firstname || !req.body.Lastname || !req.body.Email || !req.body.SecureLevel) {
+      return res.status(400).json({ error: "Required fields missing" });
     }
 
-    let user = {
-        ID: users.length +1,
+    const [id] = await knex('users').insert({
+      Username: req.body.Username,
+      Firstname: req.body.Firstname,
+      Lastname: req.body.Lastname,
+      Email: req.body.Email,
+      SecureLevel: req.body.SecureLevel
+    });
+
+    const newUser = await knex('users').where('ID', id).first();
+    res.status(201)
+      .location(`${getBaseURL(req)}/users/${id}`)
+      .json(newUser);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT kasutaja muutmine
+app.put('/users/:id', async (req, res) => {
+  try {
+    if (!req.body.Username || !req.body.Firstname || !req.body.Lastname || !req.body.Email || !req.body.SecureLevel) {
+      return res.status(400).json({ error: "Required fields missing" });
+    }
+
+    const count = await knex('users')
+      .where('ID', req.params.id)
+      .update({
         Username: req.body.Username,
         Firstname: req.body.Firstname,
         Lastname: req.body.Lastname,
         Email: req.body.Email,
-        SecureLevel: req.body.SecureLevel,
-    }
-    users.push(user);
-    res.status(201)
-        .location(`${getBaseURL(req)}/users/${users.length}`)
-        .send(user);
-})
+        SecureLevel: req.body.SecureLevel
+      });
 
-app.put('/users/:id', (req, res) => {
-    if (req.params.id == null) {
-        return res.status(404).send({error: "User not found"});
+    if (count === 0) {
+      return res.status(404).json({ error: "User not found" });
     }
-    if (!req.body.Username ||
-        !req.body.Firstname||
-        !req.body.Lastname||
-        !req.body.Email||
-        !req.body.SecureLevel) 
-    {
-        return res.status(400).send({error: "One or multiple parameters are missing"});
-    }
-    let user = {
-        ID: parseInt(req.body.id+1),
-        Username: req.body.Username,
-        Firstname: req.body.Firstname,
-        Lastname: req.body.Lastname,
-        Email: req.body.Email,
-        SecureLevel: req.body.SecureLevel,
-    }
-    user.ID = parseInt(req.body.ID);
-    users.splice((req.body.ID-1), 1, user);
-    res.status(201)
-        .location(`${getBaseURL(req)}/users/${users.length}`)
-        .send(user);
-})
 
-app.delete('/users/:id', (req, res) => {
-    if(typeof users[req.params.id -1] === 'undefined') {
-        return res.status(404).send({error: "User not found"});
-    }
-    users.splice(req.params.id-1, 1);
+    const updatedUser = await knex('users')
+      .where('ID', req.params.id)
+      .first();
+    res.json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
-    res.status(204).send({error: "No Content"});
-})
+// DELETE kasutaja kustutamine
+app.delete('/users/:id', async (req, res) => {
+  try {
+    const count = await knex('users')
+      .where('ID', req.params.id)
+      .delete();
+    
+    if (count === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Add new endpoint for sending emails
 app.post('/report', cors(), express.json(), (req, res) => {
@@ -219,6 +230,31 @@ app.post('/report', cors(), express.json(), (req, res) => {
       res.status(200).json({ message: 'Email sent successfully' });
     }
   });
+});
+
+// POST login
+app.post("/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const user = await knex('users')
+      .where('username', username)
+      .first();
+    
+    if (user && user.password === password) {
+      res.json({
+        success: true,
+        role: user.role,
+        username: user.username
+      });
+    } else {
+      res.status(401).json({ 
+        success: false,
+        error: 'Vale kasutajanimi või parool' 
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 const port = process.env.PORT || 8080;
