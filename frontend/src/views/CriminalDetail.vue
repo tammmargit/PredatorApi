@@ -2,6 +2,9 @@
   <div class="criminal-detail">
     <div class="container">
       <div class="card">
+        <div class="criminal-image" v-if="criminal.ImageUrl">
+          <img :src="criminal.ImageUrl" :alt="criminal.Name">
+        </div>
         <div class="card-header">
           <h2>{{ criminal.Name }}</h2>
         </div>
@@ -144,5 +147,18 @@ export default {
 
 .btn-secondary:hover {
   background-color: #5a6268;
+}
+
+.criminal-image {
+  width: 100%;
+  max-height: 300px;
+  overflow: hidden;
+  border-radius: 8px 8px 0 0;
+}
+
+.criminal-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 </style>

@@ -4,9 +4,8 @@ exports.up = function(knex) {
     table.string('Name').notNullable();
     table.string('Gender').notNullable();
     table.string('Offence').notNullable();
-    table.boolean('InPrison').defaultTo(false);
     table.string('City').notNullable();
-    table.string('ImageUrl').nullable();
+    table.boolean('InPrison').defaultTo(false);
     table.timestamps(true, true);
   });
 };

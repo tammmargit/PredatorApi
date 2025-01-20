@@ -39,6 +39,26 @@
           </label>
         </div>
         
+        <div class="form-group">
+          <label for="image">Pildi URL:</label>
+          <input 
+            type="text" 
+            id="image" 
+            v-model="newCriminal.ImageUrl"
+            placeholder="https://näide.com/pilt.jpg"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="imageFile">Lae üles pilt:</label>
+          <input 
+            type="file" 
+            id="imageFile" 
+            @change="handleImageUpload"
+            accept="image/*"
+          >
+        </div>
+        
         <button type="submit">Lisa kurjategija</button>
       </form>
     </div>
@@ -57,7 +77,8 @@ export default {
       Gender: 'Male',
       Offence: '',
       City: '',
-      InPrison: false
+      InPrison: false,
+      ImageUrl: ''
     });
 
     const addCriminal = async () => {
@@ -69,7 +90,8 @@ export default {
           Gender: 'Male',
           Offence: '',
           City: '',
-          InPrison: false
+          InPrison: false,
+          ImageUrl: ''
         };
         alert('Kurjategija edukalt lisatud!');
       } catch (error) {
@@ -78,9 +100,27 @@ export default {
       }
     };
 
+    const handleImageUpload = async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      // Siin peaks olema loogika pildi üleslaadimiseks serverisse
+      // Näiteks:
+      const formData = new FormData();
+      formData.append('image', file);
+
+      try {
+        const response = await axios.post('http://localhost:8080/upload', formData);
+        newCriminal.value.ImageUrl = response.data.url;
+      } catch (error) {
+        console.error('Viga pildi üleslaadimisel:', error);
+      }
+    };
+
     return {
       newCriminal,
-      addCriminal
+      addCriminal,
+      handleImageUpload
     };
   }
 }

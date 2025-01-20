@@ -7,16 +7,28 @@ const swaggerDoc = yamljs.load('./docs/swagger.yaml');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
 const knex = require('./database/db-config');
+const multer = require('multer');
+const path = require('path');
 
 app.use(cors());
 app.use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerDoc));
 app.use(express.json());
 
+// Seadistame pildi üleslaadimise
+const storage = multer.diskStorage({
+  destination: './uploads/',
+  filename: function(req, file, cb) {
+    cb(null, 'criminal-' + Date.now() + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
+
 // GET kõik kurjategijad
 app.get("/criminals", async (req, res) => {
   try {
     const criminals = await knex('criminals')
-      .select('Id', 'Name', 'Gender', 'Offence', 'City', 'InPrison');
+      .select('Id', 'Name', 'Gender', 'Offence', 'City', 'InPrison', 'ImageUrl');
     res.json(criminals);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -42,10 +54,9 @@ app.get("/criminals/:id", async (req, res) => {
 // POST uus kurjategija
 app.post('/criminals', async (req, res) => {
   try {
-    console.log('Received criminal data:', req.body); // Debug log
+    console.log('Received criminal data:', req.body);
 
     if (!req.body.Name || !req.body.Gender || !req.body.Offence || !req.body.City) {
-      console.log('Missing fields:', req.body); // Debug log
       return res.status(400).json({ error: "Required fields missing" });
     }
 
@@ -54,14 +65,14 @@ app.post('/criminals', async (req, res) => {
       Gender: req.body.Gender,
       Offence: req.body.Offence,
       City: req.body.City,
-      InPrison: req.body.InPrison || false
+      InPrison: req.body.InPrison || false,
+      ImageUrl: req.body.ImageUrl || null
     });
 
     const newCriminal = await knex('criminals').where('Id', id).first();
-    console.log('Created criminal:', newCriminal); // Debug log
     res.status(201).json(newCriminal);
   } catch (error) {
-    console.error('Error creating criminal:', error); // Debug log
+    console.error('Error creating criminal:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -261,6 +272,24 @@ app.post("/login", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Lisa uus endpoint pildi üleslaadimiseks
+app.post('/upload', upload.single('image'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    
+    // Tagasta pildi URL
+    const imageUrl = `http://localhost:8080/uploads/${req.file.filename}`;
+    res.json({ url: imageUrl });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Serveeri staatilisi faile uploads kaustast
+app.use('/uploads', express.static('uploads'));
 
 const port = process.env.PORT || 8080;
 app.listen(port, () => {
