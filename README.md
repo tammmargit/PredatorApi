@@ -41,6 +41,11 @@ Liigu frontend kausta:
     - Kui ei ole -> npm install vite –-save-dev
     - npm run dev
 
+Loo .env fail projekti kausta ja lisa sinna:
+# Email settings
+EMAIL_USER=sinu_email@email.ee
+EMAIL_APP_PASSWORD=sinu_app_password
+
 ## API Documentation
 API documentation is available at `/docs` endpoint using Swagger UI.
 
