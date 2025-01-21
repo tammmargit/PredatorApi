@@ -7,6 +7,7 @@ Klooni enda arvutisse ja ava VS Codes.
 Ava terminal ja sisesta käsklused kui ei ole vajalikke rakendusi:
     - npm install dotenv;
     - npm install -g knex
+    - knex --version
     - npm knex migrate:latest
     - knex seed:make add_user
     Sisesta enda kasutaja
