@@ -42,7 +42,7 @@ Liigu frontend kausta:
     - npm run dev
 
 Loo .env fail projekti kausta ja lisa sinna:
-# Email settings
+### Email settings
 EMAIL_USER=sinu_email@email.ee
 EMAIL_APP_PASSWORD=sinu_app_password
 
