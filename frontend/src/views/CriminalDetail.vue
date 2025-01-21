@@ -2,6 +2,9 @@
   <div class="criminal-detail">
     <div class="container">
       <div class="card">
+        <div class="card-image" v-if="criminal.ImageUrl">
+          <img :src="'http://localhost:8080/' + criminal.ImageUrl" alt="Kurjategija pilt">
+        </div>
         <div class="card-header">
           <h2>{{ criminal.Name }}</h2>
         </div>
@@ -11,6 +14,15 @@
               <div class="mb-3">
                 <label class="form-label">Nimi:</label>
                 <input type="text" class="form-control" v-model="editedCriminal.Name">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Uus pilt:</label>
+                <input 
+                  type="file" 
+                  class="form-control" 
+                  @change="handleFileUpload"
+                  accept="image/*"
+                >
               </div>
               <div class="mb-3">
                 <label class="form-label">Sugu:</label>
@@ -88,6 +100,7 @@ export default {
     const editedCriminal = ref({});
     const editing = ref(false);
     const isAuthenticated = ref(false);
+    const selectedFile = ref(null);
     const router = useRouter();
 
     onMounted(async () => {
@@ -115,18 +128,36 @@ export default {
       editing.value = false;
     };
 
+    const handleFileUpload = (event) => {
+      selectedFile.value = event.target.files[0];
+    };
+
     const updateCriminal = async () => {
       if (!isAuthenticated.value) {
         alert('Palun logi sisse, et muudatusi teha.');
         return;
       }
       try {
+        const formData = new FormData();
+        if (selectedFile.value) {
+          formData.append('image', selectedFile.value);
+        }
+        Object.keys(editedCriminal.value).forEach(key => {
+          formData.append(key, editedCriminal.value[key]);
+        });
+
         const response = await axios.put(
           `http://localhost:8080/criminals/${criminal.value.Id}`,
-          editedCriminal.value
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          }
         );
         criminal.value = response.data;
         editing.value = false;
+        selectedFile.value = null;
       } catch (error) {
         console.error('Error updating criminal:', error);
       }
@@ -152,6 +183,8 @@ export default {
       editedCriminal,
       editing,
       isAuthenticated,
+      selectedFile,
+      handleFileUpload,
       startEditing,
       cancelEdit,
       updateCriminal,
@@ -242,5 +275,21 @@ export default {
 
 .btn-secondary:hover {
   background-color: #5a6268;
+}
+
+.card-image {
+  width: 100%;
+  max-height: 300px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f9fa;
+}
+
+.card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 </style>

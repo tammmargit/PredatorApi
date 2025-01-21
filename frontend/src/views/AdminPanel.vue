@@ -39,6 +39,17 @@
           </label>
         </div>
         
+        <div class="form-group">
+          <label for="image">Pilt:</label>
+          <input 
+            type="file" 
+            id="image" 
+            @change="handleFileUpload" 
+            accept="image/*"
+            class="form-control"
+          >
+        </div>
+        
         <button type="submit">Lisa kurjategija</button>
       </form>
     </div>
@@ -59,11 +70,29 @@ export default {
       City: '',
       InPrison: false
     });
+    const selectedFile = ref(null);
+
+    const handleFileUpload = (event) => {
+      selectedFile.value = event.target.files[0];
+    };
 
     const addCriminal = async () => {
       try {
-        await axios.post('http://localhost:8080/criminals', newCriminal.value);
-        // Tühjenda vorm pärast õnnestunud lisamist
+        const formData = new FormData();
+        if (selectedFile.value) {
+          formData.append('image', selectedFile.value);
+        }
+        Object.keys(newCriminal.value).forEach(key => {
+          formData.append(key, newCriminal.value[key]);
+        });
+
+        await axios.post('http://localhost:8080/criminals', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+
+        // Tühjenda vorm
         newCriminal.value = {
           Name: '',
           Gender: 'Male',
@@ -71,6 +100,7 @@ export default {
           City: '',
           InPrison: false
         };
+        selectedFile.value = null;
         alert('Kurjategija edukalt lisatud!');
       } catch (error) {
         console.error('Viga kurjategija lisamisel:', error);
@@ -80,6 +110,8 @@ export default {
 
     return {
       newCriminal,
+      selectedFile,
+      handleFileUpload,
       addCriminal
     };
   }

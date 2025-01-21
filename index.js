@@ -7,10 +7,36 @@ const swaggerDoc = yamljs.load('./docs/swagger.yaml');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
 const knex = require('./database/db-config');
+const multer = require('multer');
 
 app.use(cors());
 app.use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerDoc));
 app.use(express.json());
+
+// Seadista multer piltide salvestamiseks
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/');
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + '-' + file.originalname);
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Not an image! Please upload an image.'), false);
+        }
+    }
+});
+
+// Serve uploaded files
+app.use('/uploads', express.static('uploads'));
 
 // GET kõik kurjategijad
 app.get("/criminals", async (req, res) => {
@@ -40,20 +66,22 @@ app.get("/criminals/:id", async (req, res) => {
 });
 
 // POST uus kurjategija
-app.post('/criminals', async (req, res) => {
+app.post('/criminals', upload.single('image'), async (req, res) => {
   try {
     if (!req.body.Name || !req.body.Gender || !req.body.Offence || !req.body.City) {
       return res.status(400).json({ error: "Required fields missing" });
     }
 
-    const [id] = await knex('criminals').insert({
+    const criminal = {
       Name: req.body.Name,
       Gender: req.body.Gender,
       Offence: req.body.Offence,
       City: req.body.City,
-      InPrison: req.body.InPrison || false
-    });
+      InPrison: req.body.InPrison || false,
+      ImageUrl: req.file ? `uploads/${req.file.filename}` : null
+    };
 
+    const [id] = await knex('criminals').insert(criminal);
     const newCriminal = await knex('criminals').where('Id', id).first();
     res.status(201).json(newCriminal);
   } catch (error) {
@@ -62,21 +90,24 @@ app.post('/criminals', async (req, res) => {
 });
 
 // PUT kurjategija muutmine
-app.put('/criminals/:id', async (req, res) => {
+app.put('/criminals/:id', upload.single('image'), async (req, res) => {
   try {
-    if (!req.body.Name || !req.body.Gender || !req.body.Offence || !req.body.City) {
+    if (!req.body.Name || !req.body.Offence) {
       return res.status(400).json({ error: "Required fields missing" });
+    }
+
+    const updateData = {
+      Name: req.body.Name,
+      Offence: req.body.Offence
+    };
+
+    if (req.file) {
+      updateData.ImageUrl = `uploads/${req.file.filename}`;
     }
 
     const count = await knex('criminals')
       .where('Id', req.params.id)
-      .update({
-        Name: req.body.Name,
-        Gender: req.body.Gender,
-        Offence: req.body.Offence,
-        City: req.body.City,
-        InPrison: req.body.InPrison
-      });
+      .update(updateData);
 
     if (count === 0) {
       return res.status(404).json({ error: "Criminal not found" });
@@ -204,32 +235,39 @@ app.delete('/users/:id', async (req, res) => {
   }
 });
 
-// Add new endpoint for sending emails
-app.post('/report', cors(), express.json(), (req, res) => {
+// Lisa see transporter'i seadistus
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER, // 'your-email@gmail.com'
+    pass: process.env.EMAIL_PASS  // 'your-app-specific-password'
+  }
+});
+
+// Muuda report endpoint
+app.post('/report', async (req, res) => {
   const { name, email, message } = req.body;
   
-  const mailOptions = {
-    from: 'margit.tammeorg@gmail.com',  // Replace with your Gmail
-    to: 'margit.tammeorg@gmail.com',   // Replace with destination email
-    subject: `New Crime Report from ${name}`,
-    text: `
-      Name: ${name}
-      Email: ${email}
-      
-      Message:
-      ${message}
-    `
-  };
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_USER,  // sinu Gmail
+      to: process.env.EMAIL_TO,      // kuhu meil saadetakse
+      subject: `New Crime Report from ${name}`,
+      text: `
+        Name: ${name}
+        Email: ${email}
+        
+        Message:
+        ${message}
+      `
+    };
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.error('Error sending email:', error);
-      res.status(500).json({ error: 'Failed to send email' });
-    } else {
-      console.log('Email sent:', info.response);
-      res.status(200).json({ message: 'Email sent successfully' });
-    }
-  });
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ message: 'Email sent successfully' });
+  } catch (error) {
+    console.error('Error sending email:', error);
+    res.status(500).json({ error: 'Failed to send email' });
+  }
 });
 
 // POST login
@@ -247,7 +285,7 @@ app.post("/login", async (req, res) => {
         username: user.username
       });
     } else {
-      res.status(401).json({ 
+      res.status(401).json({ s
         success: false,
         error: 'Vale kasutajanimi või parool' 
       });

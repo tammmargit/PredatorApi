@@ -8,6 +8,10 @@
              :key="criminal.Id" 
              class="criminal-card"
              @click="goToDetail(criminal.Id)">
+          <div class="card-image" v-if="criminal.ImageUrl">
+            <img :src="'http://localhost:8080/' + criminal.ImageUrl" :alt="criminal.Name">
+          </div>
+          
           <div class="card-header">
             <h3>{{ criminal.Name }}</h3>
             <span :class="{ 'status-in-prison': criminal.InPrison, 'status-free': !criminal.InPrison }">
@@ -159,6 +163,28 @@ export default {
   border-radius: 20px;
   font-size: 0.875rem;
   font-weight: 500;
+}
+
+.card-image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f9fa;
+}
+
+.card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-image.no-image {
+  background-color: #e9ecef;
+  color: #6c757d;
+  font-style: italic;
 }
 
 @media (max-width: 768px) {

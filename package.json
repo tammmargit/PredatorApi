@@ -1,5 +1,5 @@
 {
-  "name": "bideogam-api",
+  "name": "predator-api",
   "version": "1.0.0",
   "description": "dont read me",
   "main": "index.js",
@@ -16,6 +16,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.1",
     "knex": "^3.1.0",
+    "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.16",
     "nodemon": "^3.1.7",
     "sqlite3": "^5.1.7",
