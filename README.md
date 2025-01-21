@@ -9,14 +9,36 @@ Ava terminal ja sisesta käsklused kui ei ole vajalikke rakendusi:
     - npm install -g knex
     - knex --version
     - npm knex migrate:latest
-    - knex seed:make add_user
-    Sisesta enda kasutaja
+    - Kui ei ole seeder file -> knex seed:make add_user
+    - Sisesta enda väljamoeldud andmed näiteks: 
+exports.seed = function (knex) {
+  return knex('users')
+    .del()
+    .then(function () {
+      return knex('users').insert([
+        {
+          username: 'admin',
+          password: 'password123', 
+          role: 'admin',
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+        {
+          username: 'user',
+          password: 'user123',
+          role: 'user',
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+      ]);
+    });
+};
     - npx knex seed:run
     - npm start
     
 Liigu frontend kausta:
     - npm list vite
-    - Kui ei ole -> npm install vite –save-dev
+    - Kui ei ole -> npm install vite –-save-dev
     - npm run dev
 
 ## API Documentation
