@@ -61,3 +61,5 @@ API documentation is available at `/docs` endpoint using Swagger UI.
 - PUT /users/:id
 - DELETE /users/:id
 
+Githubi repod mida kasutasime ka (üks alles: 
+https://github.com/tammmargit/PredoAPI
