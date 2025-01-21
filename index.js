@@ -205,12 +205,20 @@ app.delete('/users/:id', async (req, res) => {
 });
 
 // Add new endpoint for sending emails
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_APP_PASSWORD
+  }
+});
+
 app.post('/report', cors(), express.json(), (req, res) => {
   const { name, email, message } = req.body;
   
   const mailOptions = {
-    from: 'margit.tammeorg@gmail.com',  // Replace with your Gmail
-    to: 'margit.tammeorg@gmail.com',   // Replace with destination email
+    from: process.env.EMAIL_USER,  // Kasutab keskkonna muutujat mille lisasid env faili
+    to: process.env.EMAIL_USER,    // Kasutab keskkonna muutujat
     subject: `New Crime Report from ${name}`,
     text: `
       Name: ${name}
