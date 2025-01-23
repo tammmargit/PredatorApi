@@ -137,6 +137,28 @@ app.get("/users/:id", async (req, res) => {
 });
 
 // POST uus kasutaja
+app.post('/users', async (req, res) => {
+  try {
+    if (!req.body.Username || !req.body.Firstname || !req.body.Lastname || !req.body.Email || !req.body.SecureLevel) {
+      return res.status(400).json({ error: "Required fields missing" });
+    }
+
+    const [id] = await knex('users').insert({
+      Username: req.body.Username,
+      Firstname: req.body.Firstname,
+      Lastname: req.body.Lastname,
+      Email: req.body.Email,
+      SecureLevel: req.body.SecureLevel
+    });
+
+    const newUser = await knex('users').where('ID', id).first();
+    res.status(201)
+      .location(`${getBaseURL(req)}/users/${id}`)
+      .json(newUser);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // PUT kasutaja muutmine
 app.put('/users/:id', async (req, res) => {
