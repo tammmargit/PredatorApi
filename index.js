@@ -23,21 +23,6 @@ app.get("/criminals", async (req, res) => {
   }
 });
 
-// GET üks kurjategija
-app.get("/criminals/:id", async (req, res) => {
-  try {
-    const criminal = await knex('criminals')
-      .where('Id', req.params.id)
-      .first();
-    
-    if (!criminal) {
-      return res.status(404).json({ error: "Criminal not found" });
-    }
-    res.json(criminal);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // POST uus kurjategija
 app.post('/criminals', async (req, res) => {
