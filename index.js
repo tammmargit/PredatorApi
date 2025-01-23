@@ -161,6 +161,34 @@ app.post('/users', async (req, res) => {
 });
 
 // PUT kasutaja muutmine
+app.put('/users/:id', async (req, res) => {
+  try {
+    if (!req.body.Username || !req.body.Firstname || !req.body.Lastname || !req.body.Email || !req.body.SecureLevel) {
+      return res.status(400).json({ error: "Required fields missing" });
+    }
+
+    const count = await knex('users')
+      .where('ID', req.params.id)
+      .update({
+        Username: req.body.Username,
+        Firstname: req.body.Firstname,
+        Lastname: req.body.Lastname,
+        Email: req.body.Email,
+        SecureLevel: req.body.SecureLevel
+      });
+
+    if (count === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const updatedUser = await knex('users')
+      .where('ID', req.params.id)
+      .first();
+    res.json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 
 // DELETE kasutaja kustutamine
