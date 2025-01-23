@@ -192,20 +192,7 @@ app.put('/users/:id', async (req, res) => {
 
 
 // DELETE kasutaja kustutamine
-app.delete('/users/:id', async (req, res) => {
-  try {
-    const count = await knex('users')
-      .where('ID', req.params.id)
-      .delete();
-    
-    if (count === 0) {
-      return res.status(404).json({ error: "User not found" });
-    }
-    res.status(204).send();
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+
 
 // Add new endpoint for sending emails
 const transporter = nodemailer.createTransport({
