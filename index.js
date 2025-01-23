@@ -94,6 +94,20 @@ app.put('/criminals/:id', async (req, res) => {
 
 
 // DELETE kurjategija
+app.delete('/criminals/:id', async (req, res) => {
+  try {
+    const count = await knex('criminals')
+      .where('Id', req.params.id)
+      .delete();
+    
+    if (count === 0) {
+      return res.status(404).json({ error: "Criminal not found" });
+    }
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // GET kõik kasutajad
 app.get("/users", async (req, res) => {
