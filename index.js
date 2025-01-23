@@ -39,27 +39,7 @@ app.get("/criminals/:id", async (req, res) => {
   }
 });
 
-// POST uus kurjategija
-app.post('/criminals', async (req, res) => {
-  try {
-    if (!req.body.Name || !req.body.Gender || !req.body.Offence || !req.body.City) {
-      return res.status(400).json({ error: "Required fields missing" });
-    }
 
-    const [id] = await knex('criminals').insert({
-      Name: req.body.Name,
-      Gender: req.body.Gender,
-      Offence: req.body.Offence,
-      City: req.body.City,
-      InPrison: req.body.InPrison || false
-    });
-
-    const newCriminal = await knex('criminals').where('Id', id).first();
-    res.status(201).json(newCriminal);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // PUT kurjategija muutmine
 app.put('/criminals/:id', async (req, res) => {
