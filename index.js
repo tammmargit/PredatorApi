@@ -121,6 +121,20 @@ app.get("/users", async (req, res) => {
 });
 
 // GET üks kasutaja
+app.get("/users/:id", async (req, res) => {
+  try {
+    const user = await knex('users')
+      .where('ID', req.params.id)
+      .first();
+    
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // POST uus kasutaja
 app.post('/users', async (req, res) => {
