@@ -63,6 +63,35 @@ app.post('/criminals', async (req, res) => {
 
 
 // PUT kurjategija muutmine
+app.put('/criminals/:id', async (req, res) => {
+  try {
+    if (!req.body.Name || !req.body.Gender || !req.body.Offence || !req.body.City) {
+      return res.status(400).json({ error: "Required fields missing" });
+    }
+
+    const count = await knex('criminals')
+      .where('Id', req.params.id)
+      .update({
+        Name: req.body.Name,
+        Gender: req.body.Gender,
+        Offence: req.body.Offence,
+        City: req.body.City,
+        InPrison: req.body.InPrison
+      });
+
+    if (count === 0) {
+      return res.status(404).json({ error: "Criminal not found" });
+    }
+
+    const updatedCriminal = await knex('criminals')
+      .where('Id', req.params.id)
+      .first();
+    res.json(updatedCriminal);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 // DELETE kurjategija
 app.delete('/criminals/:id', async (req, res) => {
