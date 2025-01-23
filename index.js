@@ -110,6 +110,15 @@ app.delete('/criminals/:id', async (req, res) => {
 });
 
 // GET kõik kasutajad
+app.get("/users", async (req, res) => {
+  try {
+    const users = await knex('users')
+      .select('ID', 'Username', 'Firstname', 'Lastname', 'Email', 'SecureLevel');
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // GET üks kasutaja
 app.get("/users/:id", async (req, res) => {
