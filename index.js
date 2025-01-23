@@ -12,7 +12,16 @@ app.use(cors());
 app.use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerDoc));
 app.use(express.json());
 
-
+// GET kõik kurjategijad
+app.get("/criminals", async (req, res) => {
+  try {
+    const criminals = await knex('criminals')
+      .select('Id', 'Name', 'Gender', 'Offence', 'City', 'InPrison');
+    res.json(criminals);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // GET üks kurjategija
 app.get("/criminals/:id", async (req, res) => {
