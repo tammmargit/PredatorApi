@@ -65,6 +65,26 @@
               Kustuta
             </button>
           </div>
+          <div class="card-body history-section" v-if="isAuthenticated">
+            <h3>Muudatuste ajalugu</h3>
+            <div class="history-list">
+              <div v-for="change in criminalHistory" 
+                   :key="change.id" 
+                   class="history-item">
+                <div class="change-info">
+                  <span class="action-type" :class="change.action_type">
+                    {{ getActionLabel(change.action_type) }}
+                  </span>
+                  <span class="user-info">
+                    {{ change.user.name }}
+                  </span>
+                  <span class="timestamp">
+                    {{ formatDate(change.created_at) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="card-footer">
           <router-link to="/criminals" class="btn btn-secondary">
@@ -80,6 +100,8 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
+import { format } from 'date-fns';
+import { et } from 'date-fns/locale';
 
 export default {
   name: 'CriminalDetail',
@@ -89,6 +111,7 @@ export default {
     const editing = ref(false);
     const isAuthenticated = ref(false);
     const router = useRouter();
+    const criminalHistory = ref([]);
 
     onMounted(async () => {
       try {
@@ -97,6 +120,7 @@ export default {
         const id = window.location.pathname.split('/').pop();
         const response = await axios.get(`http://localhost:8080/criminals/${id}`);
         criminal.value = response.data;
+        await fetchHistory(id);
       } catch (error) {
         console.error('Error fetching criminal details:', error);
       }
@@ -147,6 +171,28 @@ export default {
       }
     };
 
+    const fetchHistory = async (id) => {
+      try {
+        const response = await axios.get(`http://localhost:8080/criminals/${id}/history`);
+        criminalHistory.value = response.data;
+      } catch (error) {
+        console.error('Error fetching history:', error);
+      }
+    };
+
+    const getActionLabel = (action) => {
+      const labels = {
+        created: 'Lisatud',
+        updated: 'Muudetud',
+        deleted: 'Kustutatud'
+      };
+      return labels[action] || action;
+    };
+
+    const formatDate = (date) => {
+      return format(new Date(date), 'dd.MM.yyyy HH:mm', { locale: et });
+    };
+
     return {
       criminal,
       editedCriminal,
@@ -155,7 +201,10 @@ export default {
       startEditing,
       cancelEdit,
       updateCriminal,
-      deleteCriminal
+      deleteCriminal,
+      criminalHistory,
+      getActionLabel,
+      formatDate
     };
   }
 }
@@ -242,5 +291,58 @@ export default {
 
 .btn-secondary:hover {
   background-color: #5a6268;
+}
+
+.history-section {
+  margin-top: 2rem;
+  border-top: 1px solid #eee;
+  padding-top: 1rem;
+}
+
+.history-list {
+  margin-top: 1rem;
+}
+
+.history-item {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.change-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.action-type {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.action-type.created {
+  background-color: #28a745;
+  color: white;
+}
+
+.action-type.updated {
+  background-color: #ffc107;
+  color: black;
+}
+
+.action-type.deleted {
+  background-color: #dc3545;
+  color: white;
+}
+
+.user-info {
+  color: #666;
+  font-weight: 500;
+}
+
+.timestamp {
+  color: #999;
+  font-size: 0.875rem;
 }
 </style>
