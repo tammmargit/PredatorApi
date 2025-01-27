@@ -169,5 +169,5 @@ export default {
   .page-title {
     font-size: 2rem;
   }
-}
+} 
 </style> 
