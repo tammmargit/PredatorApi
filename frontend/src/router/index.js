@@ -5,6 +5,7 @@ import Criminals from '../views/Criminals.vue';
 import CriminalDetail from '../views/CriminalDetail.vue';
 import About from '../views/About.vue';
 import AdminPanel from '../views/AdminPanel.vue';
+import UserManagement from '../views/UserManagement.vue'
 
 const routes = [
   {
@@ -37,6 +38,12 @@ const routes = [
     name: 'AdminPanel',
     component: AdminPanel,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/users',
+    name: 'UserManagement',
+    component: UserManagement,
+    meta: { requiresAuth: true, requiresAdmin: true }
   }
 ];
 
