@@ -10,7 +10,6 @@ exports.up = function(knex) {
     table.foreign('criminal_id').references('Id').inTable('criminals').onDelete('CASCADE');
     table.foreign('user_id').references('id').inTable('users').onDelete('CASCADE');
 
-    // Composite index for better query performance
     table.index(['criminal_id', 'user_id']);
   });
 };
